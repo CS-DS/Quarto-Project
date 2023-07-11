@@ -1,0 +1,1120 @@
+import tkinter as tk
+from tkinter import font
+from typing import NamedTuple
+from itertools import cycle
+import random
+import numpy as np
+import pickle
+import os
+import time
+import csv
+
+class Player(NamedTuple):
+    human: bool
+    comp_random: bool
+    minimax: bool
+    q_learn: bool
+    turn: int
+
+class Move(NamedTuple):
+    row: int
+    col: int
+    piece: str = ""
+
+class Piece(NamedTuple):
+    piece_row: int
+    piece_col: int
+    used: bool = False
+
+class ChooseFirst:
+    
+    def __init__(self, root):
+        self.root = root
+        self.main_menu_window = tk.Toplevel(self.root)
+        self.main_menu_window.title("Quarto Menu")
+        self.main_menu_window.protocol("WM_DELETE_WINDOW", self.root.destroy)
+        self._game_type = {}
+        self._create_menu_window()
+        self._create_menu_buttons()
+
+    def _create_menu_window(self):
+        menu_frame = tk.Frame(master=self.main_menu_window)
+        menu_frame.pack(fill=tk.X)
+        self.menu = tk.Label(master=menu_frame, text="Choose First Player", font=font.Font(size=28, weight="bold"))
+        self.menu.pack()
+
+    def _create_menu_buttons(self):
+            grid_frame = tk.Frame(master=self.main_menu_window)
+            grid_frame.pack(fill=tk.X)
+            choice_list = ["Human", "Random", "MiniMax"]
+            for row in range(len(choice_list)):
+                self.main_menu_window.rowconfigure(row, weight=1, minsize=50)
+                button_border = tk.Frame(master=grid_frame, highlightbackground="#29cffe", highlightthickness=4, bd=0)
+                button = tk.Button(master=button_border, text=choice_list[row], font=font.Font(size=36, weight="bold"), fg="black", width=20, height=1, highlightbackground="lightblue")
+                self._game_type[button] = (row)
+                button.bind("<ButtonPress-1>", self.choose_game)
+                button_border.grid(row=row, padx=10, pady=3, sticky="nsew")
+                button.pack()    
+
+    def choose_game(self, event):
+        clicked_btn = event.widget
+        row = self._game_type[clicked_btn]
+        if row == 0:
+            self._quit_window()
+            next_menu = ChooseSecond(self.root, 0)
+        elif row == 1:
+            self._quit_window()
+            next_menu = ChooseSecond(self.root, 1)
+        elif row == 2:
+            self._quit_window()
+            next_menu = ChooseSecond(self.root, 2)
+
+    def _quit_window(self):
+        self.main_menu_window.destroy()
+
+class ChooseSecond:
+    
+    def __init__(self, root, first):
+        self.root = root
+        self.main_menu_window = tk.Toplevel(self.root)
+        self.main_menu_window.title("Quarto Menu")
+        self.main_menu_window.protocol("WM_DELETE_WINDOW", self.root.destroy)
+        self._game_type = {}
+        self._create_menu_window()
+        self._create_menu_buttons()
+        self.first_player = first
+
+    def _create_menu_window(self):
+        menu_frame = tk.Frame(master=self.main_menu_window)
+        menu_frame.pack(fill=tk.X)
+        self.menu = tk.Label(master=menu_frame, text="Choose Second Player", font=font.Font(size=28, weight="bold"))
+        self.menu.pack()
+
+    def _create_menu_buttons(self):
+            grid_frame = tk.Frame(master=self.main_menu_window)
+            grid_frame.pack(fill=tk.X)
+            choice_list = ["Human", "Random", "MiniMax"]
+            for row in range(len(choice_list)):
+                self.main_menu_window.rowconfigure(row, weight=1, minsize=50)
+                button_border = tk.Frame(master=grid_frame, highlightbackground="#29cffe", highlightthickness=4, bd=0)
+                button = tk.Button(master=button_border, text=choice_list[row], font=font.Font(size=36, weight="bold"), fg="black", width=20, height=1, highlightbackground="lightblue")
+                self._game_type[button] = (row)
+                button.bind("<ButtonPress-1>", self.choose_game)
+                button_border.grid(row=row, padx=10, pady=3, sticky="nsew")
+                button.pack()    
+
+    def choose_game(self, event):
+        clicked_btn = event.widget
+        row = self._game_type[clicked_btn]
+        if row == 0:
+            if self.first_player == 0:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 1), Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 1:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 1), Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 2:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 1), Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)         
+        elif row == 1:
+            if self.first_player == 0:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 1), Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 1:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 1), Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 2:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 1), Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+        elif row == 2:
+            if self.first_player == 0:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = True, comp_random = False, minimax = False, q_learn = False, turn = 1), Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 1:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = True, minimax = False, q_learn = False, turn = 1), Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+            elif self.first_player == 2:
+                self._quit_window()
+                game = QuartoGame(players = (Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 1), Player(human = False, comp_random = False, minimax = True, q_learn = False, turn = 2)), rows = 4, cols = 4, winning_number = 4)
+                board = QuartoBoard(self.root, game)
+
+    def _quit_window(self):
+        self.main_menu_window.destroy()
+
+class QuartoBoard:
+    def __init__(self, root, game):
+        self.root = root
+        self._game = game
+        self.game_window = tk.Toplevel(self.root)
+        self.game_window.title("Quarto Game")
+        self.game_window.protocol("WM_DELETE_WINDOW", self.root.destroy)
+        self._cells_squares = {}
+        self._cells_pieces = {}
+        self.buttons_squares = []
+        self.buttons_pieces = []
+        self.chosen_piece = None # No piece selected to start
+        #self.is_X = True
+        #self.number_of_games = num_games
+        self.is_squares_button_pressed = tk.BooleanVar()
+        self.is_squares_button_pressed.set(False)
+        self.is_pieces_button_pressed = tk.BooleanVar()
+        self.is_pieces_button_pressed.set(False)
+        self.clicked_btn_var_squares = None  # Set the initial value to None
+        self.clicked_btn_var_pieces = None  # Set the initial value to None
+        self.piece_list = self.generate_piece_list()
+        self._create_menu()
+        self._create_board_display()
+        self._create_first_board_grid()
+        self._create_second_board_grid()
+        self._show_game_counter()
+        self.game_window.update()
+        self.play_game()
+        #self.play_game(num_games) # The computer needs to be able to make the first move in some cases, so an initial play function is needed
+        #Create a CSV file that takes alpha, gamma, epsilon, and reward (aka result) and exports to csv so that I can track progress with more granularity. 
+
+    def _create_board_display(self):
+        display_frame = tk.Frame(master=self.game_window)
+        display_frame.pack(fill=tk.X)
+        self.display = tk.Label(master=display_frame, text=f"  Player {self._game.current_player.turn} - choose your opponent's piece  ", font=font.Font(size=20, weight="bold"))
+        self.display.pack()
+
+    def _create_first_board_grid(self):
+            grid_frame = tk.Frame(master=self.game_window)
+            grid_frame.pack()
+            for row in range(4):
+                self.game_window.rowconfigure(row, weight=1, minsize=50)
+                self.game_window.columnconfigure(row, weight=1, minsize=75)
+                for col in range(4):
+                    button_border = tk.Frame(master=grid_frame, highlightbackground="#29cffe", highlightthickness=4, bd=0)
+                    button = tk.Button(master=button_border, text="", font=font.Font(size=24, weight="bold"), fg="black", width=6, height=2, highlightbackground="lightblue")
+                    self._cells_squares[button] = (row, col)
+                    button_border.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
+                    button.bind("<Button-1>", self.handle_button_click_moves)
+                    button.pack()
+                    self.buttons_squares.append(button)
+
+    def _create_second_board_grid(self):
+            grid_frame = tk.Frame(master=self.game_window)
+            grid_frame.pack()
+            for row in range(2):
+                self.game_window.rowconfigure(row, weight=1, minsize=50)
+                self.game_window.columnconfigure(row, weight=1, minsize=75)
+                for col in range(8):
+                    button_border = tk.Frame(master=grid_frame, highlightbackground="#29cffe", highlightthickness=4, bd=0)
+                    button = tk.Button(master=button_border, text=self.piece_list[((col + 1) + (row * 8)) - 1], font=font.Font(size=10, weight="bold"), fg="black", width=5, height=1, highlightbackground="lightblue")
+                    self._cells_pieces[button] = (row, col)
+                    button_border.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
+                    button.bind("<Button-1>", self.handle_button_click_pieces)
+                    button.pack()
+                    self.buttons_pieces.append(button)
+
+    def _show_game_counter(self):
+        game_counter_frame = tk.Frame(master=self.game_window)
+        game_counter_frame.pack(fill=tk.X)
+        self.game_counter_label = tk.Label(master=game_counter_frame, text=f'Game: 1 / 1', font=font.Font(size=28, weight="bold"))
+        self.game_counter_label.pack()
+
+    def _create_menu(self):
+        menu_bar = tk.Menu(master=self.game_window)
+        self.game_window.config(menu=menu_bar)
+        file_menu = tk.Menu(master=menu_bar)
+        file_menu.add_command(label="Play Again", command=self.reset_board)
+        file_menu.add_separator()
+        file_menu.add_command(label="Choose Game Type", command=self.load_main_menu)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=quit)
+        menu_bar.add_cascade(label="File", menu=file_menu)
+
+    def _update_display(self, msg, color="black"):
+        self.display["text"] = msg
+        self.display["fg"] = color
+
+    def generate_piece_list(self):
+        piece_list = []
+        for i in range(2):
+            if i == 0:
+                att1 = "A"
+            else:
+                att1 = "B"
+            for i in range(2):
+                if i == 0:
+                    att2 = "C"
+                else:
+                    att2 = "D"
+                for i in range(2):
+                    if i == 0:
+                        att3 = "E"
+                    else:
+                        att3 = "F"
+                    for i in range(2):
+                        if i == 0:
+                            att4 = "G"
+                        else:
+                            att4 = "H"
+                        piece_list.append(att1 + att2 + att3 + att4)
+                    
+        #print(piece_list)
+        return piece_list
+                        
+    def load_main_menu(self):
+        self.game_window.destroy()
+        menu = ChooseFirst(self.root)
+
+    def handle_button_click_pieces(self, event):
+        #Applies to buttons used for selecting pieces
+        #print("Button Clicked")
+        #print(self.clicked_btn_var)
+        row, col = self._cells_pieces[event.widget]
+        if self._game._selected_pieces[row][col].used == False:
+            self.clicked_btn_var_pieces = event.widget
+            self.is_pieces_button_pressed.set(True)
+        #print(self.clicked_btn_var)
+
+    def handle_button_click_moves(self, event):
+            #Applies to buttons on the grid for placing pieces
+            #print("Button Clicked")
+            #print(self.clicked_btn_var)
+            row, col = self._cells_squares[event.widget]
+            if self._game._current_moves[row][col].piece == "":
+                self.clicked_btn_var_squares = event.widget
+                self.is_squares_button_pressed.set(True)
+            #print(self.clicked_btn_var)
+
+    def _update_pieces_button(self, clicked_btn):
+        clicked_btn.config(text="")
+
+    def _update_squares_button(self, clicked_btn, move):
+        clicked_btn.config(text=move.piece)
+
+    def _highlight_cells(self):
+        for button, coordinates in self._cells_squares.items():
+            for combo in self._game.winner_combo:
+                if coordinates in combo:
+                    button.config(fg="red")
+
+    def play_game(self):
+        self.choose_piece()
+
+    def choose_piece(self):
+        if self._game.current_player.human:
+            self.play_human_choose_piece()
+        else:
+            self.play_computer_choose_piece(None)
+
+    def enable_pieces(self):
+        for button in self.buttons_pieces:
+            button.config(state = tk.NORMAL, bg = 'SystemButtonFace')        
+        for button in self.buttons_squares:
+            button.config(state = tk.DISABLED, bg = 'lightgray')
+
+    def enable_squares(self):
+        for button in self.buttons_squares:
+            button.config(state = tk.NORMAL, bg = 'SystemButtonFace')
+        for button in self.buttons_pieces:
+            button.config(state = tk.DISABLED, bg = 'gray')
+
+    def play_human_choose_piece(self):
+        self.enable_pieces()
+        msg = f"      Player {self._game.current_player.turn} - choose your opponent's piece      "
+        self._update_display(msg)
+        #self.game_window.update()
+        self.game_window.wait_variable(self.is_pieces_button_pressed)
+        self.is_pieces_button_pressed.set(False)
+        clicked_btn = self.clicked_btn_var_pieces
+        row, col = self._cells_pieces[clicked_btn]
+        self.clicked_btn_var_pieces = None
+        chosen_piece = self.piece_list[((col + 1) + (row * 8)) - 1]
+        self.chosen_piece = chosen_piece
+        #print(self.chosen_piece)
+        self._game.toggle_player()
+        self._update_pieces_button(clicked_btn)
+        self.piece_list = ["" if piece == chosen_piece else piece for piece in self.piece_list]
+        if self._game.current_player.human:
+            self.play_human_move(chosen_piece)
+        else:
+            self.play_computer_move(chosen_piece)
+
+    def play_human_move(self, piece):
+        self.enable_squares()
+        msg = f"          Player {self._game.current_player.turn} - make your move ({self.chosen_piece})          "
+        self._update_display(msg)
+        #self.game_window.update()
+        self.game_window.wait_variable(self.is_squares_button_pressed)
+        self.is_squares_button_pressed.set(False)
+        clicked_btn = self.clicked_btn_var_squares
+        row, col = self._cells_squares[clicked_btn]
+        move = Move(row, col, piece)
+        self.clicked_btn_var_squares = None
+        if self._game.is_valid_move(move):
+                self._update_squares_button(clicked_btn, move)
+                #self.game_window.update()
+                self._game.process_move(move)
+                if self._game.is_tied():
+                    self._update_display(msg="Tied game!", color="red")
+                elif self._game.has_winner():
+                    self._highlight_cells()
+                    msg = f"                        Player {self._game.current_player.turn} won!                        "
+                    self._update_display(msg)
+                    #self.game_window.update()
+                else:
+                    self._game.turn_number += 1
+                    self.play_human_choose_piece()
+                    
+
+    def play_computer_choose_piece(self, imported_piece):
+        self.enable_pieces()
+        #msg = f"      Player {self._game.current_player.turn} - choose your opponent's piece      "
+        #self._update_display(msg)
+        if imported_piece != None: # If a piece has been imported in from the computer move (i.e. not randomly chosen)
+            chosen_piece = imported_piece
+        else:
+            chosen_piece = self._game.computer_choose_piece(self.piece_list)
+        index = self.piece_list.index(chosen_piece)
+        self.chosen_piece = chosen_piece
+        self.piece_list = ["" if piece == chosen_piece else piece for piece in self.piece_list]
+        row = index // 8
+        col = index % 8
+        #print(chosen_piece)
+        #print(index, row, col)
+        clicked_btn = next(key for key, value in self._cells_pieces.items() if value == (row, col))
+        self._game.toggle_player()
+        self._update_pieces_button(clicked_btn)
+        if self._game.current_player.human:
+            self.play_human_move(chosen_piece)
+        else:
+            self.game_window.update()
+            self.play_computer_move(chosen_piece)
+
+    def play_computer_move(self, piece):
+        # BUG - Sometimes the computer chooses a move but the board doesn't update and the game just ends???
+        self.enable_squares()
+        #msg = f"          Player {self._game.current_player.turn} - make your move ({self.chosen_piece})          "
+        #self._update_display(msg)
+        row, col, imported_piece = self._game.computer_choose_square(self.piece_list, piece) # Computer calculates 'best' move and 'best' next piece
+        print("Player", self._game.current_player.turn, "found that the best move for ", piece, " was (", row, col, ") and chose ", imported_piece, " as the next piece")
+        move = Move(row, col, piece)
+        clicked_btn = next(key for key, value in self._cells_squares.items() if value == (row, col))
+        if self._game.is_valid_move(move):
+                #print("Valid Move!")
+                self._update_squares_button(clicked_btn, move)
+                self._game._has_winner = False # This seems like it might fix a bug that kept the flag on - I have no idea how the flag stayed on.
+                #self.game_window.update()
+                self._game.process_move(move)
+                if self._game.is_tied():
+                    self._update_display(msg="Tied game!", color="red")
+                elif self._game.has_winner():
+                    self._highlight_cells()
+                    msg = f"                     Player {self._game.current_player.turn} won!                     "
+                    self._update_display(msg)
+                    #self.game_window.update()
+                else:
+                    self.game_window.update()
+                    self._game.turn_number += 1
+                    self.play_computer_choose_piece(imported_piece)
+        else:
+            print("Invalid Move for some reason!?!?!?")     
+    
+    def reset_board(self):
+        #Reset the game's board to play again.
+        self._game.reset_game()
+        self.piece_list = self.generate_piece_list()
+        i = 0
+        self._update_display(msg=f"  Player {self._game.current_player.turn} - choose your opponent's piece  ")
+        for button in self._cells_squares.keys():
+            button.config(highlightbackground="lightblue")
+            button.config(text="")
+            button.config(fg="black")
+        for button in self._cells_pieces.keys():
+            button.config(highlightbackground="lightblue")
+            button.config(text=self.piece_list[i])
+            button.config(fg="black")
+            i += 1
+        self.game_window.update()
+        self.play_game()
+
+
+"""def _update_button(self, clicked_btn):
+        clicked_btn.config(text=move.piece)
+
+
+
+def _update_game_counter(self, msg):
+    self.game_counter_label["text"] = msg
+
+
+
+
+
+
+def play_game(self, number_of_games):
+    #game_count = 0
+    #x_games_won = 0
+    #o_games_won = 0
+    while game_count < number_of_games:
+        game_counter_msg = f'Game: {game_count + 1} / {self.number_of_games}'
+        self._update_game_counter(game_counter_msg)
+        self.play_X()
+        if self._game.has_winner():
+            print(f'Player "{self._game.winning_label}" won!')
+            if self._game.winning_label == "X":
+                x_games_won += 1
+                self._game.result_history.append(1)
+            else:
+                o_games_won += 1
+                self._game.result_history.append(-1)
+        else:
+            self._game.result_history.append(0)
+            print("Draw!")
+        if self._game._players_list[0].q_learn:
+            self._game.q_player_move("X") #This might need updating to allow for both x and o learners to update once the game ends
+            #print("Final Update X")
+        if self._game._players_list[1].q_learn:
+            self._game.q_player_move("O")
+            #print("Final Update O")
+        if self._game._players_list[0].human or self._game._players_list[1].human:
+            time.sleep(3)
+        self.reset_board()
+        game_count += 1
+        #print("Reset!")
+    msg = f'Match Complete! X won {x_games_won} games and O won {o_games_won} games.'
+    self._update_display(msg)
+    self._game.save_result_history(self._game.result_history)
+    if self._game._players_list[0].q_learn:
+        #print(self._game.q_table_x)
+        self._game.save_q_table_x()
+    if self._game._players_list[1].q_learn:
+        #print(self._game.q_table_o)
+        self._game.save_q_table_o()
+    #print(self._game.result_history)
+
+def play_X(self):
+    #print(self._game._players_list[0].human)
+    if self._game._players_list[0].human:
+        self.is_X = True
+        self.play_human()
+    else:
+        self.play_computer()
+        self.game_window.update()
+        if not self._game.has_winner() and not self._game.is_tied():
+            self.play_O()
+
+def play_O(self):
+    #print(self._game._players_list[1].human)
+    if self._game._players_list[1].human:
+        self.is_X = False
+        self.play_human()
+    else:
+        self.play_computer()
+        self.game_window.update()
+        if not self._game.has_winner() and not self._game.is_tied():
+            self.play_X()
+
+
+
+def play_computer(self):
+    Handle a computer's move.
+    #Might be worth just saying 'go in the centre' for move 1? Algorithm is slow otherwise - could use symmetry?
+    if self._game.current_player.q_learn:
+        row, col = self._game.q_player_move(self._game.current_player.label)
+    else:
+        row, col = self._game.computer_move()
+    clicked_btn = next(key for key, value in self._cells.items() if value == (row, col))
+    move = Move(row, col, self._game.current_player.label)
+    if self._game.is_valid_move(move):
+        #print("Valid Comp Move")
+        self._update_button(clicked_btn)
+        self._game.process_move(move)
+        if self._game.is_tied():
+            self._update_display(msg="Tied game!", color="red")
+        elif self._game.has_winner():
+            self._highlight_cells()
+            msg = f'Player "{self._game.current_player.label}" won!'
+            color = self._game.current_player.color
+            self._update_display(msg, color)
+        else:
+            self._game.toggle_player()
+            msg = f"{self._game.current_player.label}'s turn"
+            self._game.empty_spaces -= 1
+            self._update_display(msg) """
+            
+
+
+"""def reset_board(self):
+    #Reset the game's board to play again.
+    self._game.reset_game()
+    self._update_display(msg="Ready?")
+    for button in self._cells.keys():
+        button.config(highlightbackground="lightblue")
+        button.config(text="")
+        button.config(fg="black")
+    self.is_X = True
+    self.game_window.update()
+
+def reset_complete_board(self):
+    #Reset the game's board to play again.
+    self._game.reset_game()
+    self._update_display(msg="Ready?")
+    for button in self._cells.keys():
+        button.config(highlightbackground="lightblue")
+        button.config(text="")
+        button.config(fg="black")
+    self.is_X = True
+    self._game.result_history = []
+    self.game_window.update()
+    self.play_game(self.number_of_games)"""
+
+class QuartoGame:
+    # Maybe add in a winning letter thing at the end?
+    def __init__(self, players, rows, cols, winning_number):
+        self._players_list = players
+        self._players = cycle(players)
+        self.rows = rows
+        self.cols = cols
+        self.winning_number = winning_number
+        self.current_player = next(self._players)
+        self.winner_combo = []
+        self._selected_pieces = []
+        self._current_moves = []
+        self._has_winner = False
+        self._winning_combos = []
+        self.winning_letter = ""
+        self.winning_turn = None
+        self.turn_number = 1
+        #self.empty_spaces = rows*cols
+        #self.q_table_x = self.load_q_table_x()
+        #self.q_table_o = self.load_q_table_o()
+        #self.previous_q_state_x = []
+        #self.next_q_state_x = []
+        #self.previous_q_state_o = []
+        #self.next_q_state_o = []
+        #self.q_action = 0
+        #self.q_reward = 0
+        #self.result_history = []
+        self._setup_board()
+
+    def _setup_board(self):
+        self._current_moves = [[Move(row, col) for col in range(self.rows)] for row in range(self.cols)]
+        self._selected_pieces = [[Piece(piece_row, piece_col) for piece_col in range(8)] for piece_row in range(2)]
+        self._winning_combos = self._get_winning_combos()
+
+    def _get_winning_combos(self):
+        rows = [[(move.row, move.col) for move in row] for row in self._current_moves]
+        columns = [list(col) for col in zip(*rows)]
+        winning_coordinates = []
+
+        # Rows
+        for row in rows:
+            for i in range(len(row) - self.winning_number + 1):
+                coordinates = row[i:i+self.winning_number]
+                winning_coordinates.append(coordinates)
+
+        # Columns
+        for col in columns:
+            for i in range(len(col) - self.winning_number + 1):
+                coordinates = col[i:i+self.winning_number]
+                winning_coordinates.append(coordinates)
+
+        # Generate all possible diagonals
+        diagonals = []
+        for i in range(len(rows) - self.winning_number + 1):
+            for j in range(len(rows[0]) - self.winning_number + 1):
+                diagonal = [(i + k, j + k) for k in range(self.winning_number)]
+                diagonals.append(diagonal)
+        for i in range(len(rows) - self.winning_number + 1):
+            for j in range(self.winning_number - 1, len(rows[0])):
+                diagonal = [(i + k, j - k) for k in range(self.winning_number)]
+                diagonals.append(diagonal)
+
+        # Combine all coordinate lists
+        return winning_coordinates + diagonals
+
+    def is_valid_move(self, move):
+        """Return True if move is valid, and False otherwise."""
+        row, col = move.row, move.col
+        move_was_not_played = self._current_moves[row][col].piece == ""
+        #if move_was_not_played:
+           #print("Move was not played")
+        # I don't think the below condition is needed, because I already check for a winner in the method that calls this and so play won't continue once the game is over
+        #no_winner = not self._has_winner 
+        #if no_winner:
+        #    print("No Winner")
+        return move_was_not_played
+    
+    def process_move(self, move):
+            #Process the current move and check if it's a win.
+            row, col = move.row, move.col
+            self._current_moves[row][col] = move
+            for combo in self._winning_combos:
+                for i in range(self.winning_number): #Possible winning number issue here in the future - the piece length may not directly depend on winning number
+                    letters = [self._current_moves[n][m].piece[i] for n, m in combo if self._current_moves[n][m].piece != ""]
+                    if len(letters) >= self.winning_number:
+                        results = set(letters)
+                        is_win = len(results) == 1
+                        if is_win:
+                            self._has_winner = True
+                            #print("Winner Woo!")
+                            self.winner_combo.append(combo)
+
+    def has_winner(self):
+        """Return True if the game has a winner, and False otherwise."""
+        return self._has_winner
+    
+    def is_tied(self):
+        """Return True if the game is tied, and False otherwise."""
+        no_winner = not self._has_winner
+        played_moves = (move.piece for row in self._current_moves for move in row)
+        return no_winner and all(played_moves)
+    
+    def toggle_player(self):
+        """Return a toggled player."""
+        self.current_player = next(self._players)
+
+    def reset_game(self):
+        """Reset the game state to play again."""
+        for row, row_content in enumerate(self._current_moves):
+            for col, _ in enumerate(row_content):
+                row_content[col] = Move(row, col)
+        self.winner_combo = []
+        self._selected_pieces = []
+        self._current_moves = []
+        self._has_winner = False
+        self._winning_combos = []
+        self.winning_turn = None
+        self.turn_number = 1
+        self._setup_board()
+        #self.empty_spaces = self.rows*self.cols
+        #self.previous_q_state_x = []
+        #self.next_q_state_x = []
+        #self.previous_q_state_o = []
+        #self.next_q_state_o = []
+        #self.q_action = 0
+        #self.q_reward = 0
+        if self.current_player.turn == 2: # 1 always goes first
+            self.toggle_player()
+
+    def is_board_full(self):
+        return all(self._current_moves[i][j].piece != "" for i in range(self.rows) for j in range(self.cols))      
+
+    def computer_choose_piece(self, pieces):
+        # This should run in all cases for random comp, and only in the case of comp is player 1 and making first selection otherwise (as it will import a piece in all other cases)
+        valid_piece_list = []
+        for i in pieces:
+            if i != "":
+                valid_piece_list.append(i)
+        return random.choice(valid_piece_list)
+    
+    def computer_choose_square(self, piece_list, chosen_piece):
+        if self.current_player.comp_random:
+            valid_moves_list = []
+            #print(self._game._current_moves)
+            for row in self._current_moves:
+                for item in row:
+                    if item.piece == "":
+                        valid_moves_list.append((item.row, item.col))
+            row, col = random.choice(valid_moves_list)
+            next_piece = None
+            return row, col, next_piece # If comp is random, don't return a next piece
+        elif self.current_player.minimax:
+            player = MiniMax(chosen_piece, self, self.current_player.turn)
+            row, col, piece, depth = player.select_move_and_piece(piece_list)
+            return row, col, piece
+
+    """def q_player_move(self, label):
+        if label == "X":
+            #print("X")
+            q_player = QLearningComputerPlayer(0, 0.85, 0, self, self.q_table_x, label) #Set alpha, gamma, and epsilon values
+            #print("q-player initialised")
+        if label == "O":
+            q_player = QLearningComputerPlayer(0.3, 0.85, 0.3, self, self.q_table_o, label) #Set alpha, gamma, and epsilon values
+        q_player.update_states()   
+        if label == "X":
+            #print("X again")
+            if self.previous_q_state_x != []:
+                self.q_reward = q_player.calculate_q_reward(self._current_moves, label)
+                #print(self.q_reward)
+                q_player.update_q_table(self.previous_q_state_x, self.q_action, self.next_q_state_x, self.q_reward)
+                #print("Updated!")
+        if label == "O":
+            if self.previous_q_state_o != []:
+                self.q_reward = q_player.calculate_q_reward(self._current_moves, label)
+                #print(self.q_reward)
+                q_player.update_q_table(self.previous_q_state_o, self.q_action, self.next_q_state_o, self.q_reward)
+        if not self.has_winner() and not self.is_tied():
+            valid_moves_list = [(row, col) for row in range(self.rows) for col in range(self.cols) if self._current_moves[row][col].label == ""]
+            valid_moves = [row * self.rows + col for row, col in valid_moves_list] #Makes a list of valid moves where the values correspond to the index of the cell
+            action = q_player.choose_action(self._current_moves, valid_moves)
+            #self.previous_q_state = self._current_moves
+            #print(self.previous_q_state)
+            self.q_action = action # Action that leads to the next state
+            #print(action)
+            move = q_player.convert_to_move(action)
+            #print(move)
+            return move"""
+
+class MiniMax:
+
+    def __init__(self, piece, game, turn):
+        self.current_piece = piece
+        self.game = game
+        self.current_turn = turn
+        self._moves_list = self.generate_spiral_move_list()
+        
+    def generate_spiral_move_list(self):
+        # Need to change this to spiral inwards
+        """move_list = []
+        center_row = self.game.rows // 2
+        center_col = self.game.cols // 2 # Should give bottom right of a centre square
+        steps = 1
+        move_count = 0
+        turns = 0
+
+        # Initialize the direction offsets for spiral movement - L, U, R, D
+        directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+        current_direction = 0
+
+        # Initialize the starting position at the center
+        current_row = center_row
+        current_col = center_col
+
+        # Iterate through the grid in a spiral pattern
+        for i in range(self.game.rows * self.game.cols):
+            move_list.append((current_row, current_col))
+
+            if move_count == steps:
+                if current_direction < 3:
+                    current_direction = current_direction + 1
+                else:
+                    current_direction = 0
+                if turns == 1:
+                    steps += 1
+                    turns = 0
+                else:
+                    turns += 1
+                move_count = 0
+            
+            current_row += directions[current_direction][0]
+            current_col += directions[current_direction][1]
+
+            move_count += 1
+
+        #print(move_list)
+        return move_list"""
+
+        move_list = []
+        start_row = 0
+        start_col = 0
+        end_row = self.game.rows - 1
+        end_col = self.game.cols - 1
+
+        move_count = 0
+
+        while start_row <= end_row and start_col <= end_col:
+            # Traverse top row from left to right
+            for col in range(start_col, end_col + 1):
+                move_list.append((start_row, col))
+                move_count += 1
+
+            start_row += 1
+
+            # Traverse right column from top to bottom
+            for row in range(start_row, end_row + 1):
+                move_list.append((row, end_col))
+                move_count += 1
+
+            end_col -= 1
+
+            if move_count < self.game.rows * self.game.cols:
+                # Traverse bottom row from right to left
+                for col in range(end_col, start_col - 1, -1):
+                    move_list.append((end_row, col))
+                    move_count += 1
+
+                end_row -= 1
+
+            if move_count < self.game.rows * self.game.cols:
+                # Traverse left column from bottom to top
+                for row in range(end_row, start_row - 1, -1):
+                    move_list.append((row, start_col))
+                    move_count += 1
+
+                start_col += 1
+
+        #print(move_list)
+        return move_list
+        
+    def select_move_and_piece(self, piece_list):
+
+        best_score = float('-inf')
+        best_winning_depth = float('inf')
+        best_losing_depth = float('-inf')
+        alpha = float('-inf')
+        beta = float('inf')
+        available_moves = []
+        #empty_grid = [[Move(row, col) for col in range(self.game.cols)] for row in range(self.game.rows)]
+        """if self.game._current_moves == empty_grid:
+            #print("Hello")
+            #BELOW: Temporary measure for training Q-Learning - choose random first move
+            #return random.choice(self._moves_list)
+            #BELOW: Choose centre move as first move - this is what MiniMax would do in all circumstances for tic tac toe.
+            return (self._moves_list[0][0], self._moves_list[0][1], ) # NEED TO DO SOMETHING ABOUT PIECE CHOICE!
+        else:"""
+        for i in self._moves_list: # Ignore the 'move in the centre' condition for now - not necessarily the best move
+            row = i[0]
+            col = i[1]
+            if self.game._current_moves[row][col].piece == "":
+                new_piece_list = ["" if item == self.current_piece else item for item in piece_list]
+                #print("Trialing Move (", row, col, "), Piece ", self.current_piece, " with ", (len(new_piece_list) - new_piece_list.count("")), " pieces!")
+                for next_piece in new_piece_list:
+                    if next_piece != "":
+                        #print(next_piece)
+                        minimax_piece_list = ["" if item == next_piece else item for item in new_piece_list]
+                    #num = np.random.uniform(0, 1)
+                    #if num < 0.1:
+                    #    print(self.game._current_moves)                
+                        move = Move(row, col, self.current_piece)
+                        self.game._has_winner = False # This seems like it might fix a bug that kept the flag on - I have no idea how the flag stayed on.
+                        self.minimax_process_move(move, self.game._current_moves, self.game, 0)
+                    #if num < 0.1:
+                    #    print(self.game._current_moves) 
+                    #if self.game._has_winner:
+                        #print("Winner!")
+                        #print(self.game._current_moves)
+                        score, score_depth = self.minimax(self.game._current_moves, 0, alpha, beta, False, self.game, minimax_piece_list, next_piece)
+                        #print("This move gave a score of ", score, " with a depth of ", score_depth)
+                        move = Move(row, col, "")
+                        self.minimax_process_move(move, self.game._current_moves, self.game, 0)
+                        #print("Score: ", score)
+                        #print("Piece: ", piece)
+                        #print("Best Score: ", best_score)
+                        if score == 10000: # If a winning move is found, play it if it's the lowest depth
+                            best_score = score
+                            if score_depth < best_winning_depth:
+                                best_winning_depth = score_depth
+                                available_moves = [(row, col, next_piece, score_depth)]
+                                if score_depth == 0: # Play the move immediately if it wins on the spot
+                                    print("Move: ", self.game.turn_number, ", Player", self.game.current_player.turn, "found that the best moves for ", self.current_piece, " were ", available_moves, " with a best score of ", best_score)
+                                    return random.choice(available_moves)
+                            elif score_depth == best_winning_depth:
+                                available_moves.append((row, col, next_piece, score_depth))
+                            #print("I think I win")
+                        elif score == -10000:
+                            if best_score < -10000:
+                                best_score = score
+                            if best_score == -10000:
+                                if score_depth > best_losing_depth:  # If the best move is one that loses, choose the one that loses with the highest depth
+                                    best_losing_depth = score_depth
+                                    available_moves = [(row, col, next_piece, score_depth)]
+                                elif score_depth == best_losing_depth:
+                                    available_moves.append((row, col, next_piece, score_depth))                        
+                        elif score > best_score: # I don't care about score depth if the move isn't winning or losing
+                            best_score = score
+                            available_moves = [(row, col, next_piece, score_depth)]
+                        elif score == best_score:
+                            available_moves.append((row, col, next_piece, score_depth))
+        print("Move: ", self.game.turn_number, ", Player", self.game.current_player.turn, "found that the best moves for ", self.current_piece, " were ", available_moves, " with a best score of ", best_score) # BIG ISSUE - If it detects a win, but doesn't play the winning move, it doesn't choose a next piece.
+        return random.choice(available_moves)
+    
+    def minimax(self, board, depth, alpha, beta, maximizing_player, game, piece_list, piece):
+        # NEED TO DO SOMETHING ABOUT PIECE CHOICE - AFTER MOVE IS PROCESSED IN SELECT_MOVE_AND_PIECE, MINIMAX NEEDS TO HAVE MAXIMISING PLAYER CHOOSE PIECE FOR MINIMISING PLAYER
+        # Maybe some alpha beta issues now?
+        # Add in a 'if losing, best move is the move that loses in the most moves' condition using depth and 'if winning, best move is the move that wins in the fewest moves'
+        # BUG - One computer player will think that every move is losing, but the other one won't think there is a winning move
+        # BUG - Reverse of the above issue - computer will think that the move draws but it actually loses, sometimes instantly - why would this not be picked up?
+        #print(depth)
+        #max_depth = 2
+        #print(self.game.turn_number)
+
+        if self.game.turn_number < 5:
+            max_depth = 1
+        elif self.game.turn_number < 7:
+            max_depth = 2
+        elif self.game.turn_number < 9:
+            max_depth = 3
+        else:
+            max_depth = 4
+
+        """if maximizing_player: # This means that the board is being evaluated by the minimising player (i.e. the next player)
+            if self.current_turn == 1:
+                current_turn = 2
+            else:
+                current_turn = 1
+        else:
+            current_turn = self.current_turn"""
+
+        #if np.random.uniform(0, 1) < 0.1:
+        #    print("Current Turn: ", current_turn, self.current_turn)
+        
+        if game.is_board_full():
+            if game._has_winner:
+                if maximizing_player:
+                    score = -10000    
+                    score_depth = depth
+                    game._has_winner = False   
+                    return score, score_depth
+                else:
+                    score = 10000  
+                    score_depth = depth
+                    game._has_winner = False   
+                    return score, score_depth
+            else:
+                score = 0
+                score_depth = depth
+                return score, score_depth
+        elif depth == max_depth:
+            if game._has_winner:
+                if maximizing_player:
+                    score = -10000    
+                    score_depth = depth
+                    game._has_winner = False   
+                    return score, score_depth
+                else:
+                    score = 10000  
+                    score_depth = depth
+                    game._has_winner = False   
+                    return score, score_depth
+            else:
+                score = self.evaluate(board, game, maximizing_player)
+                score_depth = depth
+                return score, score_depth
+
+        if maximizing_player:
+            #print("Maximising Player")
+            if game._has_winner: # This means the minimising player just won on their move
+                #if depth == 1:
+                    #print("I think I lose here next move")
+                #print(game._current_moves, depth, game.winning_letter)
+                score = -10000 
+                score_depth = depth
+                game._has_winner = False   
+                return score, score_depth
+            max_eval = float('-inf')
+            max_eval_depth = float('inf')
+            for i in self._moves_list:
+                row = i[0]
+                col = i[1]
+                if game._current_moves[row][col].piece == "":
+                    for next_piece in piece_list:
+                        if next_piece != "":
+                            move = Move(row, col, piece)
+                            self.minimax_process_move(move, board, game, depth + 1)
+                            #print("Hello 2")
+                            #if np.random.uniform(0, 1) < 0.1:
+                            #    print("Max Player: ", depth, other_turn)
+                            minimax_piece_list = ["" if item == next_piece else item for item in piece_list]
+                            eval, eval_depth = self.minimax(game._current_moves, depth + 1, alpha, beta, False, game, minimax_piece_list, next_piece)                               
+                            move = Move(row, col, "")
+                            self.minimax_process_move(move, board, game, depth + 1) # Do I need to add piece back into piece list????
+                            #print("Other Eval: ", eval)
+                            if eval > max_eval or (eval == max_eval and eval_depth < max_eval_depth): # Add conditions for eval == max_eval and max_eval == min_max_eval - added depth condition for fewest moves until win
+                                # The above condition may not work (or maybe just for losses???) 
+                                max_eval = eval
+                                max_eval_depth = eval_depth
+                            alpha = max(alpha, eval)
+                            if alpha >= beta:
+                                #print("Max Alpha > Beta")
+                                break
+                                
+            return max_eval, max_eval_depth
+        
+        else:
+            if game._has_winner: # This means the minimising player just won on their move
+                #if depth == 1:
+                    #print("I think I lose here next move")
+                #print(game._current_moves, depth, game.winning_letter)
+                score = 10000 
+                score_depth = depth
+                game._has_winner = False   
+                return score, score_depth
+            min_eval = float('inf')
+            min_eval_depth = float('inf')
+            for i in self._moves_list:
+                row = i[0]
+                col = i[1]
+                if game._current_moves[row][col].piece == "":
+                    for next_piece in piece_list:
+                        if next_piece != "":                        
+                            move = Move(row, col, piece)
+                            self.minimax_process_move(move, board, game, depth + 1)
+                            #print("Hello 2")
+                            #if np.random.uniform(0, 1) < 0.1:
+                            #    print("Max Player: ", depth, other_turn)
+                            minimax_piece_list = ["" if item == next_piece else item for item in piece_list]
+                            eval, eval_depth = self.minimax(game._current_moves, depth + 1, alpha, beta, True, game, minimax_piece_list, next_piece)                               
+                            move = Move(row, col, "")
+                            self.minimax_process_move(move, board, game, depth + 1) # Do I need to add piece back into piece list????
+                            #print("Other Eval: ", eval)
+                            if eval < min_eval or (eval == min_eval and eval_depth > min_eval_depth): # Keep the move that has the most turns until a loss
+                                min_eval = eval
+                                min_eval_depth = eval_depth
+                            beta = min(beta, eval)
+                            if alpha >= beta:
+                                #print("Max Alpha > Beta")
+                                break
+                               
+            return min_eval, min_eval_depth
+        
+    def evaluate(self, board, game, maximizing_player): # Evaluates the board once it reaches max depth
+        # NEEDS ADJUSTING BUT THE LAYOUT IS FINE I THINK
+        # Maybe add value on completing a line
+        # Maybe look at each attribute 
+        score = 0
+        for combo in game._winning_combos:
+            for i in range(4): #Possible winning number issue here in the future
+                letters = [board[n][m].piece[i] for n, m in combo if board[n][m].piece != ""]
+                results = set(letters)
+                if len(results) == 1:
+                   score += (len(letters) ** 2) # If there's only 1 letter (non-blank) in the set, score is the amount of times that letter appears squared
+                elif len(letters) == 4: # Otherwise, reward a defensive player for closing off a line
+                    score += 12 # Arbitrary number, better than 3 in a row but worse than 4 in a row
+        #score = score * -1
+        #if turn == self.current_turn: # If it's the current player's turn, make the score negative, as the board is being given to the other player - this might be irrelevant as this will be the same sign all the time
+        #    score = score * -1
+        #if np.random.uniform(0, 1) < 0.01:
+        #    print(turn, self.current_turn)
+        #    print("Score: ", score)
+        if maximizing_player:
+            score = score * -1
+        return score
+    
+    def minimax_process_move(self, move, board, game, depth):
+        # This makes the move for the computer without conducting label change
+        row, col = move.row, move.col
+        board[row][col] = move
+        for combo in game._winning_combos:
+            for i in range(game.winning_number): #Possible winning number issue here in the future - the piece length may not directly depend on winning number
+                letters = [board[n][m].piece[i] for n, m in combo if board[n][m].piece != ""]
+                if len(letters) >= game.winning_number:
+                    results = set(letters)
+                    is_win = (len(results) == 1)
+                    if is_win:
+                        game.winning_letter = str(results)
+                        #if depth == 0:
+                            #print("Winner at Depth 0!")
+                            #print(game._current_moves)
+                            #print(game.winning_letter)                        
+                        game._has_winner = True
+
+def main():
+
+    root = tk.Tk()
+    root.withdraw()
+    menu = ChooseFirst(root)
+
+    root.mainloop()
+    
+    #game = TicTacToeGame()
+    #board = TicTacToeBoard(game)
+    #board.withdraw()
+    #menu = MainMenuWindow(board)
+    #board.mainloop()
+
+if __name__ == "__main__":
+    main()
